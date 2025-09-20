@@ -1,0 +1,15 @@
+// tests/login.spec.ts
+import { test, expect } from "@playwright/test";
+
+test("login → dashboard", async ({ page }) => {
+  const baseURL = process.env.BASE_URL ?? "https://example.com";
+
+  await page.goto(`${baseURL}/login`);
+  await page.getByTestId("email").fill("user@example.com");
+  await page.getByTestId("password").fill("SuperSecret123!");
+  await page.getByTestId("submit").click();
+
+  await expect(page).toHaveURL(/.*\/dashboard/);
+  await expect(page.getByTestId("welcome-card")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /welcome/i })).toBeVisible();
+});

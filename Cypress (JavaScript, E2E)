@@ -1,0 +1,26 @@
+// cypress/support/commands.js
+Cypress.Commands.add("login", (email, password) => {
+  cy.visit("/login");
+  cy.get("[data-cy=email]").type(email);
+  cy.get("[data-cy=password]").type(password, { log: false });
+  cy.get("[data-cy=submit]").click();
+});
+// cypress/e2e/login.cy.js
+describe("Login flow", () => {
+  beforeEach(() => {
+    cy.intercept("POST", "/api/auth/login").as("login");
+  });
+
+  it("logs in and shows dashboard", () => {
+    const baseUrl = Cypress.env("BASE_URL") || "https://example.com";
+    cy.visit(`${baseUrl}/login`);
+
+    cy.login("user@example.com", "SuperSecret123!");
+    cy.wait("@login").its("response.statusCode").should("be.oneOf", [200, 204]);
+
+    cy.url().should("include", "/dashboard");
+    cy.get("[data-cy=welcome-card]").should("be.visible").and("contain", "Welcome");
+  });
+});
+npm i -D cypress
+npx cypress open   # or: npx cypress run

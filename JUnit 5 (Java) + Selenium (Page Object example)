@@ -1,0 +1,87 @@
+// pom.xml deps (snip):
+/*
+<dependencies>
+  <dependency>
+    <groupId>org.seleniumhq.selenium</groupId>
+    <artifactId>selenium-java</artifactId>
+    <version>4.23.0</version>
+  </dependency>
+  <dependency>
+    <groupId>org.junit.jupiter</groupId>
+    <artifactId>junit-jupiter</artifactId>
+    <version>5.10.2</version>
+    <scope>test</scope>
+  </dependency>
+  <dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.9.2</version>
+  </dependency>
+</dependencies>
+*/
+// src/test/java/pages/LoginPage.java
+package pages;
+
+import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.*;
+
+public class LoginPage {
+    private final WebDriver driver;
+    private final WebDriverWait wait;
+
+    public LoginPage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, java.time.Duration.ofSeconds(10));
+    }
+
+    public LoginPage open(String baseUrl) {
+        driver.get(baseUrl + "/login");
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("[data-cy='email']")));
+        return this;
+    }
+
+    public void login(String email, String password) {
+        driver.findElement(By.cssSelector("[data-cy='email']")).sendKeys(email);
+        driver.findElement(By.cssSelector("[data-cy='password']")).sendKeys(password);
+        driver.findElement(By.cssSelector("[data-cy='submit']")).click();
+    }
+}
+// src/test/java/tests/LoginTest.java
+package tests;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+import org.junit.jupiter.api.*;
+import org.openqa.selenium.*;
+import org.openqa.selenium.chrome.*;
+import org.openqa.selenium.support.ui.*;
+import pages.LoginPage;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class LoginTest {
+    private WebDriver driver;
+    private WebDriverWait wait;
+    private final String baseUrl = System.getenv().getOrDefault("BASE_URL", "https://example.com");
+
+    @BeforeEach
+    void setup() {
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions opts = new ChromeOptions();
+        opts.addArguments("--headless=new","--window-size=1400,900");
+        driver = new ChromeDriver(opts);
+        wait = new WebDriverWait(driver, java.time.Duration.ofSeconds(10));
+    }
+
+    @AfterEach
+    void teardown() { driver.quit(); }
+
+    @Test
+    void loginShowsDashboard() {
+        new LoginPage(driver).open(baseUrl).login("user@example.com", "SuperSecret123!");
+
+        wait.until(ExpectedConditions.urlContains("/dashboard"));
+        WebElement card = wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("[data-cy='welcome-card']")));
+        assertTrue(card.getText().contains("Welcome"));
+    }
+}
+mvn -q -Dtest=LoginTest test

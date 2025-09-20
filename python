@@ -1,0 +1,17 @@
+# test_login.py
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+
+def test_login_success(driver, wait, base_url):
+    driver.get(f"{base_url}/login")
+    wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-cy='email']"))).send_keys("user@example.com")
+    driver.find_element(By.CSS_SELECTOR, "[data-cy='password']").send_keys("SuperSecret123!")
+    driver.find_element(By.CSS_SELECTOR, "[data-cy='submit']").click()
+
+    wait.until(EC.url_contains("/dashboard"))
+    # Assert a dashboard widget appears
+    widget = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-cy='welcome-card']")))
+    assert "Welcome" in widget.text
+
+    # Optional: screenshot on success
+    driver.save_screenshot("screenshots/login_success.png")
